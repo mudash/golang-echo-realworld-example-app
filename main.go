@@ -1,6 +1,8 @@
 package main
 
 import (
+	beeline "github.com/honeycombio/beeline-go"
+	"github.com/honeycombio/beeline-go/wrappers/hnyecho"
 	"github.com/xesina/golang-echo-realworld-example-app/db"
 	"github.com/xesina/golang-echo-realworld-example-app/handler"
 	"github.com/xesina/golang-echo-realworld-example-app/router"
@@ -27,7 +29,17 @@ import (
 // @name Authorization
 
 func main() {
+
+	beeline.Init(beeline.Config{
+		WriteKey:    "719e96d80e2ddb380b79b48282c39cdb",
+		Dataset:     "GoEchoRealApp",
+		ServiceName: "EchoAPI",
+	})
+	defer beeline.Close()
+
 	r := router.New()
+
+	r.Use(hnyecho.New().Middleware())
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 

@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
+	beeline "github.com/honeycombio/beeline-go"
 	"github.com/labstack/echo/v4"
 	"github.com/xesina/golang-echo-realworld-example-app/model"
 	"github.com/xesina/golang-echo-realworld-example-app/utils"
@@ -181,9 +183,14 @@ func (h *Handler) Follow(c echo.Context) error {
 	if u == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
+	fmt.Println("***Before: followers for user ", u.Username, ": ", len(u.Followers))
 	if err := h.userStore.AddFollower(u, followerID); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
+
+	fmt.Println("***After: followers for user ", u.Username, ": ", len(u.Followers))
+	beeline.AddFieldToTrace(c.Request().Context(), "Followers", len(u.Followers))
+	beeline.AddFieldToTrace(c.Request().Context(), "User", u.Username)
 	return c.JSON(http.StatusOK, newProfileResponse(h.userStore, userIDFromToken(c), u))
 }
 

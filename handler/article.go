@@ -2,9 +2,11 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	beeline "github.com/honeycombio/beeline-go"
 	"github.com/labstack/echo/v4"
 	"github.com/xesina/golang-echo-realworld-example-app/model"
 	"github.com/xesina/golang-echo-realworld-example-app/utils"
@@ -273,6 +275,10 @@ func (h *Handler) AddComment(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 
+	// Debug statement, Todo: cleanup
+	fmt.Println("***Article: ", a.Title)
+	fmt.Println("***Comment count before adding: ", len(a.Comments))
+
 	var cm model.Comment
 
 	req := &createCommentRequest{}
@@ -283,6 +289,13 @@ func (h *Handler) AddComment(c echo.Context) error {
 	if err = h.articleStore.AddComment(a, &cm); err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
+
+	// Debug statement, Todo: cleanup
+	fmt.Println("***Article: ", a.Title)
+	fmt.Println("***Comment count after adding: ", len(a.Comments))
+
+	beeline.AddFieldToTrace(c.Request().Context(), "comment_count", len(a.Comments))
+	beeline.AddFieldToTrace(c.Request().Context(), "Title", a.Title)
 
 	return c.JSON(http.StatusCreated, newCommentResponse(c, &cm))
 }
@@ -383,9 +396,18 @@ func (h *Handler) Favorite(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 
+	// Debug statement, Todo: cleanup
+	fmt.Println("***Fav Count, before adding fav: ", len(a.Favorites))
+
 	if err := h.articleStore.AddFavorite(a, userIDFromToken(c)); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
+
+	// Debug statement, Todo: cleanup
+	fmt.Println("***Fav Count, after adding fav: ", len(a.Favorites))
+
+	beeline.AddFieldToTrace(c.Request().Context(), "favorite", a.Favorites)
+	beeline.AddFieldToTrace(c.Request().Context(), "Title", a.Title)
 
 	return c.JSON(http.StatusOK, newArticleResponse(c, a))
 }

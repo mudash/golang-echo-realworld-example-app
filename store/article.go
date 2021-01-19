@@ -46,6 +46,7 @@ func (as *ArticleStore) GetUserArticleBySlug(userID uint, slug string) (*model.A
 }
 
 func (as *ArticleStore) CreateArticle(a *model.Article) error {
+
 	tags := a.Tags
 
 	tx := as.db.Begin()

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	beeline "github.com/honeycombio/beeline-go"
 	"github.com/honeycombio/beeline-go/wrappers/hnyecho"
 	"github.com/xesina/golang-echo-realworld-example-app/db"
@@ -31,7 +33,7 @@ import (
 func main() {
 
 	beeline.Init(beeline.Config{
-		WriteKey:    "719e96d80e2ddb380b79b48282c39cdb",
+		WriteKey:    os.Getenv("HONEY_API_KEY"),
 		Dataset:     "GoEchoRealApp",
 		ServiceName: "EchoAPI",
 	})

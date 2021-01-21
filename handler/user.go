@@ -51,10 +51,18 @@ func (h *Handler) SignUp(c echo.Context) error {
 // @Failure 500 {object} utils.Error
 // @Router /users/login [post]
 func (h *Handler) Login(c echo.Context) error {
+
+	ctx := c.Request().Context()
+	ctx, span := beeline.StartSpan(ctx, "LoginOp")
+	defer span.Send()
+
 	req := &userLoginRequest{}
 	if err := req.bind(c); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
+
+	_, childspan1 := span.CreateChild(ctx)
+	childspan1.AddField("LopinOp", "GetByEmail")
 	u, err := h.userStore.GetByEmail(req.User.Email)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
@@ -62,9 +70,14 @@ func (h *Handler) Login(c echo.Context) error {
 	if u == nil {
 		return c.JSON(http.StatusForbidden, utils.AccessForbidden())
 	}
+	childspan1.Send()
+	_, childspan2 := span.CreateChild(ctx)
+	childspan2.AddField("LopinOp", "check_password")
+
 	if !u.CheckPassword(req.User.Password) {
 		return c.JSON(http.StatusForbidden, utils.AccessForbidden())
 	}
+	childspan2.Send()
 	return c.JSON(http.StatusOK, newUserResponse(u))
 }
 
